@@ -1,0 +1,118 @@
+Timer unit: 1e-06 s
+
+Total time: 5.90438 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: _get_k_nearest_neighbors at line 39
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    39                                               @profile
+    40                                               def _get_k_nearest_neighbors(self, X: list[list[float]], y: list[int], x: list[float]) -> list[int]:
+    41                                                   # Return the labels of the k nearest neighbors of x in the dataset (X, y)
+    42                                                   # Calculate Euclidean distance between x and each point in X
+    43       921        345.1      0.4      0.0          distances = []
+    44   3390201     916282.5      0.3     15.5          for i, point in enumerate(X):
+    45   3389280    2318372.6      0.7     39.3              dist = self.distance(point, x)
+    46   3389280    1447160.4      0.4     24.5              distances.append((dist, y[i]))
+    47                                                   
+    48                                                   # Sort by distance and select the k nearest neighbors
+    49       921    1216840.8   1321.2     20.6          distances.sort(key=lambda pair: pair[0])
+    50       921       5147.7      5.6      0.1          k_nearest_labels = [label for _, label in distances[:self.k]]
+    51       921        235.1      0.3      0.0          return k_nearest_labels
+
+Total time: 9.25236 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: __call__ at line 53
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    53                                               @profile
+    54                                               def __call__(self, data: tuple[list[list[float]], list[int]], new_points: list[list[float]]) -> list[int]:
+    55                                                   # Classify each point in new_points using the kNN algorithm
+    56         1          1.7      1.7      0.0          X, y = data
+    57         1          0.8      0.8      0.0          predictions = []
+    58                                           
+    59                                                   # Convert X to NumPy arrays if backend is "numpy" or "numba"
+    60         1          1.8      1.8      0.0          if self.backend in ["numpy", "numba"]:
+    61         1      11068.5  11068.5      0.1              X = [np.array(x) for x in X]
+    62                                           
+    63       922       2114.2      2.3      0.0          for point in new_points:
+    64                                                       # Convert point to NumPy array if backend is "numpy" or "numba"
+    65       921        925.2      1.0      0.0              if self.backend in ["numpy", "numba"]:
+    66       921       9912.2     10.8      0.1                  point = np.array(point)
+    67                                                   
+    68                                                       # Get the k nearest neighbors
+    69       921    9205734.8   9995.4     99.5              neighbors = self._get_k_nearest_neighbors(X, y, point)
+    70                                                       # Perform majority voting
+    71       921      21957.9     23.8      0.2              predicted_class = majority_vote(neighbors)
+    72       921        642.4      0.7      0.0              predictions.append(predicted_class)
+    73         1          0.1      0.1      0.0          return predictions
+
+Total time: 0 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance at line 8
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     8                                           @profile
+     9                                           def distance(point1: list[float], point2: list[float]) -> float:
+    10                                               # Computing the Euclidean distance between two points
+    11                                               # Arguments: two points as lists, Returns: squared Euclidean distance
+    12                                           
+    13                                               # Initialize the sum of squared differences
+    14                                               sum_of_squares = 0.0
+    15                                               
+    16                                               # Raise error if dimensions not matching
+    17                                               if len(point1) != len(point2):
+    18                                                   raise ValueError("The dimensions of the points do not match")
+    19                                               
+    20                                               # Loop through the points and calculate the sum of squared differences
+    21                                               for p1, p2 in zip(point1, point2):
+    22                                                   sum_of_squares += (p1 - p2) ** 2
+    23                                               
+    24                                               # Return the Euclidean distance
+    25                                               return sum_of_squares ** 0.5
+
+Total time: 0 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance_numpy at line 27
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    27                                           @profile
+    28                                           def distance_numpy(point1: np.ndarray, point2: np.ndarray) -> float:
+    29                                               # Computing the Euclidean distance between two points using NumPy
+    30                                               # Arguments: two points as NumPy arrays, Returns: Euclidean distance
+    31                                               return np.linalg.norm(point1 - point2)
+
+Total time: 0.0111084 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: majority_vote at line 34
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    34                                           @profile
+    35                                           def majority_vote(neighbors: list[int]) -> int:
+    36                                               # Return the majority class label from a list of neighbors
+    37       921        706.4      0.8      6.4      frequency = {}
+    38                                               
+    39                                               # Count the frequency of each label
+    40      5526       1951.5      0.4     17.6      for label in neighbors:
+    41      4605       3718.9      0.8     33.5          frequency[label] = frequency.get(label, 0) + 1
+    42                                               
+    43                                               # Handle the tie scenario explicitly (first encountered label wins)
+    44       921       4731.7      5.1     42.6      return max(frequency, key=lambda k: frequency[k])
+
+Total time: 0 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance_numba at line 50
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    50                                           @profile
+    51                                           @cc.export('distance_numba', 'f8(f8[:], f8[:])')
+    52                                           def distance_numba(point1: np.ndarray, point2: np.ndarray) -> float:
+    53                                               # Compute the Euclidean distance manually
+    54                                               diff = point1 - point2
+    55                                               return np.sqrt(np.sum(diff ** 2))
+

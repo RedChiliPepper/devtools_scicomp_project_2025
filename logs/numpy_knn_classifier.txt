@@ -1,0 +1,105 @@
+Timer unit: 1e-06 s
+
+Total time: 0.212896 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: _get_k_nearest_neighbors at line 33
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    33                                               @profile
+    34                                               def _get_k_nearest_neighbors(self, X: list[list[float]], y: list[int], x: list[float]) -> list[int]:
+    35                                                   # Return the labels of the k nearest neighbors of x in the dataset (X, y)
+    36                                                   # Calculate Euclidean distance between x and each point in X
+    37        71         19.2      0.3      0.0          distances = []
+    38     19951       5562.5      0.3      2.6          for i, point in enumerate(X):
+    39     19880     190618.5      9.6     89.5              dist = self.distance(point, x)
+    40     19880       8068.2      0.4      3.8              distances.append((dist, y[i]))
+    41                                                   
+    42                                                   # Sort by distance and select the k nearest neighbors
+    43        71       8458.1    119.1      4.0          distances.sort(key=lambda pair: pair[0])
+    44        71        154.8      2.2      0.1          k_nearest_labels = [label for _, label in distances[:self.k]]
+    45        71         15.0      0.2      0.0          return k_nearest_labels
+
+Total time: 0.236589 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: __call__ at line 47
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    47                                               @profile
+    48                                               def __call__(self, data: tuple[list[list[float]], list[int]], new_points: list[list[float]]) -> list[int]:
+    49                                                   # Classify each point in new_points using the kNN algorithm
+    50         1          1.0      1.0      0.0          X, y = data
+    51         1          0.5      0.5      0.0          predictions = []
+    52                                           
+    53                                                   # Convert X to NumPy arrays if backend is "numpy"
+    54         1          0.7      0.7      0.0          if self.backend == "numpy":
+    55         1        926.1    926.1      0.4              X = [np.array(x) for x in X]
+    56                                           
+    57        72         33.5      0.5      0.0          for point in new_points:
+    58                                                       # Convert point to NumPy array if backend is "numpy"
+    59        71         29.0      0.4      0.0              if self.backend == "numpy":
+    60        71        220.8      3.1      0.1                  point = np.array(point)
+    61                                                   
+    62                                                       # Get the k nearest neighbors
+    63        71     234360.1   3300.8     99.1              neighbors = self._get_k_nearest_neighbors(X, y, point)
+    64                                                       # Perform majority voting
+    65        71        988.2     13.9      0.4              predicted_class = majority_vote(neighbors)
+    66        71         28.9      0.4      0.0              predictions.append(predicted_class)
+    67         1          0.2      0.2      0.0          return predictions
+
+Total time: 0 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance at line 6
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     6                                           @profile
+     7                                           def distance(point1: list[float], point2: list[float]) -> float:
+     8                                               # Computing the Euclidean distance between two points
+     9                                               # Arguments: two points as lists, Returns: squared Euclidean distance
+    10                                           
+    11                                               # Initialize the sum of squared differences
+    12                                               sum_of_squares = 0.0
+    13                                               
+    14                                               # Raise error if dimensions not matching
+    15                                               if len(point1) != len(point2):
+    16                                                   raise ValueError("The dimensions of the points do not match")
+    17                                               
+    18                                               # Loop through the points and calculate the sum of squared differences
+    19                                               for p1, p2 in zip(point1, point2):
+    20                                                   sum_of_squares += (p1 - p2) ** 2
+    21                                               
+    22                                               # Return the Euclidean distance
+    23                                               return sum_of_squares ** 0.5
+
+Total time: 0.127299 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance_numpy at line 25
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    25                                           @profile
+    26                                           def distance_numpy(point1: np.ndarray, point2: np.ndarray) -> float:
+    27                                               # Computing the Euclidean distance between two points using NumPy
+    28                                               # Arguments: two points as NumPy arrays, Returns: Euclidean distance
+    29     19880     127298.6      6.4    100.0      return np.linalg.norm(point1 - point2)
+
+Total time: 0.00043325 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: majority_vote at line 32
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    32                                           @profile
+    33                                           def majority_vote(neighbors: list[int]) -> int:
+    34                                               # Return the majority class label from a list of neighbors
+    35        71         20.4      0.3      4.7      frequency = {}
+    36                                               
+    37                                               # Count the frequency of each label
+    38       426        107.5      0.3     24.8      for label in neighbors:
+    39       355        167.2      0.5     38.6          frequency[label] = frequency.get(label, 0) + 1
+    40                                               
+    41                                               # Handle the tie scenario explicitly (first encountered label wins)
+    42        71        138.1      1.9     31.9      return max(frequency, key=lambda k: frequency[k])
+

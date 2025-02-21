@@ -1,0 +1,85 @@
+Timer unit: 1e-06 s
+
+Total time: 0.964093 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: _get_k_nearest_neighbors at line 26
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    26                                               @profile
+    27                                               def _get_k_nearest_neighbors(self, X: list[list[float]], y: list[int], x: list[float]) -> list[int]:
+    28                                                   # Return the labels of the k nearest neighbors of x in the dataset (X, y)
+    29                                                   # Calculate Euclidean distance between x and each point in X
+    30        71         18.9      0.3      0.0          distances = []
+    31     19951       5131.5      0.3      0.5          for i, point in enumerate(X):
+    32     19880     945869.2     47.6     98.1              dist = distance(point, x)
+    33     19880       7474.7      0.4      0.8              distances.append((dist, y[i]))
+    34                                                   
+    35                                                   # Sort by distance and select the k nearest neighbors
+    36        71       5402.6     76.1      0.6          distances.sort(key=lambda pair: pair[0])
+    37        71        180.9      2.5      0.0          k_nearest_labels = [label for _, label in distances[:self.k]]
+    38        71         15.3      0.2      0.0          return k_nearest_labels
+
+Total time: 0.984953 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: __call__ at line 40
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    40                                               @profile
+    41                                               def __call__(self, data: tuple[list[list[float]], list[int]], new_points: list[list[float]]) -> list[int]:
+    42                                                   # Classify each point in new_points using the kNN algorithm
+    43         1          0.9      0.9      0.0          X, y = data
+    44         1          0.3      0.3      0.0          predictions = []
+    45                                                   
+    46        72         22.2      0.3      0.0          for point in new_points:
+    47                                                       # Get the k nearest neighbors
+    48        71     983854.3  13857.1     99.9              neighbors = self._get_k_nearest_neighbors(X, y, point)
+    49                                                       # Perform majority voting
+    50        71       1044.9     14.7      0.1              predicted_class = majority_vote(neighbors)
+    51        71         30.2      0.4      0.0              predictions.append(predicted_class)
+    52         1          0.2      0.2      0.0          return predictions
+
+Total time: 0.426708 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance at line 4
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     4                                           @profile
+     5                                           def distance(point1: list[float], point2: list[float]) -> float:
+     6                                               # Computing the Euclidean distance between two points
+     7                                               # Arguments: two points as lists, Returns: squared Euclidean distance
+     8                                           
+     9                                               # Initialize the sum of squared differences
+    10     19880       4217.4      0.2      1.0      sum_of_squares = 0.0
+    11                                               
+    12                                               # Raise error if dimensions not matching
+    13     19880       6627.2      0.3      1.6      if len(point1) != len(point2):
+    14                                                   raise ValueError("The dimensions of the points do not match")
+    15                                               
+    16                                               # Loop through the points and calculate the sum of squared differences
+    17    695800     171511.9      0.2     40.2      for p1, p2 in zip(point1, point2):
+    18    675920     238309.7      0.4     55.8          sum_of_squares += (p1 - p2) ** 2
+    19                                               
+    20                                               # Return the Euclidean distance
+    21     19880       6041.4      0.3      1.4      return sum_of_squares ** 0.5
+
+Total time: 0.00048764 s
+File: /home/eleonora/Scrivania/sissa/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: majority_vote at line 24
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    24                                           @profile
+    25                                           def majority_vote(neighbors: list[int]) -> int:
+    26                                               # Return the majority class label from a list of neighbors
+    27        71         20.0      0.3      4.1      frequency = {}
+    28                                               
+    29                                               # Count the frequency of each label
+    30       426        109.1      0.3     22.4      for label in neighbors:
+    31       355        182.0      0.5     37.3          frequency[label] = frequency.get(label, 0) + 1
+    32                                               
+    33                                               # Handle the tie scenario explicitly (first encountered label wins)
+    34        71        176.6      2.5     36.2      return max(frequency, key=lambda k: frequency[k])
+
